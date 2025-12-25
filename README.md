@@ -1,83 +1,151 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEOMA CORE - النسخة التجريبية</title>
-    <style>
-        :root {
-            --neon-green: #00ff88;
-            --dark-bg: #0a0a0a;
-            --panel-bg: #141414;
-            --text-gray: #b0b0b0;
-        }
+<meta charset="UTF-8" />
+<title>NEOMA – Core MVP</title>
+<style>
+    body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #0b0b0b;
+        color: #eaeaea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
 
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--dark-bg);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+    .card {
+        width: 320px;
+        padding: 20px;
+        background: #111;
+        border-radius: 16px;
+        border: 1px solid #1f1f1f;
+        text-align: center;
+    }
 
-        .container {
-            width: 350px;
-            background: var(--panel-bg);
-            padding: 25px;
-            border-radius: 24px;
-            border: 1px solid #222;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-        }
+    .stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        font-size: 14px;
+        opacity: 0.85;
+    }
 
-        .header-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            background: rgba(255,255,255,0.03);
-            padding: 10px;
-            border-radius: 12px;
-        }
+    .neoma {
+        width: 140px;
+        height: 140px;
+        margin: 20px auto;
+        border-radius: 50%;
+        background: radial-gradient(circle at top, #00ff88, #006644);
+        box-shadow: 0 0 30px #00ff8860;
+    }
 
-        .stat-box { font-size: 14px; }
-        .stat-box span { display: block; font-weight: bold; color: var(--neon-green); font-size: 18px; }
+    button {
+        width: 100%;
+        padding: 14px;
+        font-size: 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        background: #00ff88;
+        color: #000;
+        font-weight: bold;
+    }
 
-        .neoma-display {
-            width: 160px;
-            height: 160px;
-            margin: 20px auto;
-            border-radius: 50%;
-            background: radial-gradient(circle at top, var(--neon-green), #004422);
-            box-shadow: 0 0 40px rgba(0, 255, 136, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-            transition: 0.5s;
-        }
+    button:disabled {
+        background: #333;
+        color: #777;
+        cursor: not-allowed;
+    }
 
-        .neoma-display.working {
-            animation: pulse 2s infinite;
-            filter: grayscale(0.5);
-        }
+    .timer {
+        margin-top: 10px;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+</style>
+</head>
+<body>
 
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+<div class="card">
+    <div class="stats">
+        <div>🔩 خردة: <span id="scrap">0</span></div>
+        <div>💰 NMA: <span id="nma">0</span></div>
+    </div>
 
-        button {
-            width: 100%;
-            padding: 16px;
-            font-size: 18px;
-            border: none;
-            border-radius: 14px;
-            cursor: pointer;
-            background: var(--neon-green);
-            color: #000;
-            font-
+    <div class="neoma"></div>
+
+    <button id="missionBtn" onclick="startMission()">إرسال في مهمة</button>
+    <div class="timer" id="timer"></div>
+</div>
+
+<script>
+/* ====== DATA ====== */
+let neoma = {
+    scrap_count: 0,
+    nma_balance: 0,
+    is_on_mission: false,
+    last_mission_start: null,
+    mission_duration: 4 * 60 * 60 * 1000 // 4 ساعات
+};
+
+let countdownInterval = null;
+
+/* ====== LOGIC ====== */
+function startMission() {
+    if (neoma.is_on_mission) return;
+
+    neoma.is_on_mission = true;
+    neoma.last_mission_start = Date.now();
+    document.getElementById("missionBtn").disabled = true;
+
+    startCountdown();
+
+    setTimeout(completeMission, neoma.mission_duration);
+}
+
+function completeMission() {
+    neoma.is_on_mission = false;
+    document.getElementById("missionBtn").disabled = false;
+    document.getElementById("timer").textContent = "";
+    clearInterval(countdownInterval);
+
+    if (Math.random() > 0.5) {
+        neoma.scrap_count += 1;
+        alert("🔩 نيوما عاد بقطعة خردة");
+    } else {
+        neoma.nma_balance += 50;
+        alert("💰 نيوما عاد بـ 50 NMA");
+    }
+
+    updateUI();
+}
+
+function startCountdown() {
+    countdownInterval = setInterval(() => {
+        const elapsed = Date.now() - neoma.last_mission_start;
+        const remaining = neoma.mission_duration - elapsed;
+
+        if (remaining <= 0) return;
+
+        const h = Math.floor(remaining / 3600000);
+        const m = Math.floor((remaining % 3600000) / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+
+        document.getElementById("timer").textContent =
+            `⏳ ${h}h ${m}m ${s}s`;
+    }, 1000);
+}
+
+function updateUI() {
+    document.getElementById("scrap").textContent = neoma.scrap_count;
+    document.getElementById("nma").textContent = neoma.nma_balance;
+}
+
+/* ====== INIT ====== */
+updateUI();
+</script>
+
+</body>
+</html>
